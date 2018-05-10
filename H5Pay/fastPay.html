@@ -1,0 +1,225 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+		<title>快捷支付</title>
+		<script type="text/javascript" src="js/jquery-3.2.1.js" ></script>
+		<link rel="stylesheet" href="css/style.css" />
+		<style>
+			.con_bott{width:100%;text-align: center;position: relative;top:60px;}
+			.spe input{width:38%;}
+			.spe .msgs{width:30%;cursor: pointer;}
+			#loader8 { 
+			  position: relative;
+			  top:-100px;
+			  left:50%;  
+			  margin-left:-20px;  
+			  border-top: 8px solid rgba(0, 0, 0, 0.2);     
+			  border-right: 8px solid rgba(0, 0, 0, 0.2);     
+			  border-bottom: 8px solid rgba(0, 0, 0, 0.2);     
+			  border-left: 8px solid rgba(0, 0, 0, 0.5);     
+			  -webkit-animation: load8 1.1s infinite linear;     
+			  animation: load8 1.1s infinite linear;     
+			}     
+			#loader8,#loader8:after {     
+			  border-radius: 50%;     
+			  width: 20px;     
+			  height: 20px;     
+			}     
+			@-webkit-keyframes load8 {     
+			  0% {     
+			    -webkit-transform: rotate(0deg);     
+			    transform: rotate(0deg);     
+			  }     
+			  100% {     
+			    -webkit-transform: rotate(360deg);     
+			    transform: rotate(360deg);     
+			  }     
+			}     
+			@keyframes load8 {     
+			  0% {     
+			    -webkit-transform: rotate(0deg);     
+			    transform: rotate(0deg);     
+			  }     
+			  100% {     
+			    -webkit-transform: rotate(360deg);     
+			    transform: rotate(360deg);     
+			  }     
+			}     
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<section class="con_main">
+				<header class="con_main_tit">
+					<div class="con_main_tit_tip">付款给业务交易账户——交易账户</div>
+					<div class="con_main_tit_money">
+						<span class="money" id="money"></span>
+						<span>元</span>
+					</div>
+					<span class="up">
+							<img src="img/up.png" />
+					</span>
+					<span class="down">
+						<img src="img/down.png" />
+					</span>
+				</header>
+				<section class="con_main_more">
+					<div class="more_tit">
+						<div class="more_tit_name">商品名称</div>
+						<div class="more_tit_exp" id="pro_name">银联支付</div>
+					</div>
+					<div class="more_main">
+						<div class="more_main_name">订单号</div>
+						<div class="more_main_exp" id="orders"></div>
+					</div>
+				</section>
+				<section class="con_main_carId">
+					<div class="more_main">
+						<div class="more_main_name">银行卡号</div>
+						<div class="more_main_exp">
+							<input type="text" placeholder="请输入银行卡号" id="carId" />
+						</div>
+					</div>
+				</section>
+				<section class="btns">
+					<div class="pay" id="pay">提交</div>
+				</section>
+			</section>
+			<footer class="con_bott">
+				<section class="con_bott_tit">
+					<span class="bott_tit_img"><img src="img/logo.png" /></span><span class="bott_tit_tex">银联快捷支付</span>
+				</section>
+				<section class="con_bott_msg">本服务由云时代提供技术支持</section>
+				<section class="con_bott_call">云时代客服电话: <span>400-873-2911</span></section>
+			</footer>
+			<div class="modal">
+	            <div class="modal-dialog">
+		            <div class="modal-content">
+			            <form id="buy-form">
+			                <div class="tips" id="error"></div>
+			            </form>
+					</div>
+				 </div>
+		     </div>
+		     <div id="loader8" style="display: none;"></div>
+		</div>
+		<script>
+			//获取地址栏
+	    	function UrlSearch()
+				{                 
+				    var name,value;
+				    var str=location.href; //取得整个地址栏
+				    var num=str.indexOf("?")
+				    str=str.substr(num+1); //取得所有参数   stringvar.substr(start [, length ]
+				    var arr=str.split("&"); //各个参数放到数组里
+				    for(var i=0;i < arr.length;i++){
+				        num=arr[i].indexOf("=");
+				        if(num>0){
+				            name=arr[i].substring(0,num);
+				            value=arr[i].substr(num+1);
+				            this[name]=value;
+				        }
+				    }
+				}
+				var Request=new UrlSearch(); //实例化
+				var money=Request.money;
+				var liqType=Request.liqType;
+				var alias=Request.alias;
+				var userId=Request.userId;
+				var remark=Request.remark;
+
+				function toDecimal2(x){
+				    var f = parseFloat(x);
+				    if (isNaN(f)) {
+				        return false;
+				    }
+				    var f = Math.round(x*100)/100;
+				    var s = f.toString();
+				    var rs = s.indexOf('.');
+				    if (rs < 0) {
+				        rs = s.length;
+				        s += '.';
+				    }
+				    while (s.length <= rs + 2) {
+				        s += '0';
+				    }
+				    return s;
+				}
+				$("#money").html(toDecimal2(money));
+				//随机生成20位订单号
+				var userOrder="";
+					for(var i=0;i<20;i++){
+						userOrder+=Math.floor(Math.random()*10);
+					}
+				$("#orders").html(userOrder);
+				$("#pay").bind("click",function(){
+					var regs=/^([1-9]{1})(\d{14,18})$/;
+					if($("#carId").val()==""){
+						$(".modal").css("display","block");
+						$("#error").html("银行卡号不能为空!");
+						setTimeout(function(){
+							$(".modal").css("display","none");
+						},1200);
+					}else if(!regs.test($("#carId").val())){
+						$(".modal").css("display","block");
+						$("#error").html("银行卡号格式不正确!");
+						setTimeout(function(){
+							$(".modal").css("display","none");
+						},1200);
+					}else{
+						var carId=$("#carId").val();
+						$("#pay").unbind('click');
+						$("#loader8").css("display","block");
+						$("#pay").css("background","#ff7878");
+						userOrder="";
+						for(var i=0;i<20;i++){
+							userOrder+=Math.floor(Math.random()*10);
+						}
+						$("#orders").html(userOrder);
+						$.ajax({
+							type:"post",
+							url:"http://120.55.20.13/H5pPay/Pay",
+							data:{
+									"userId":userId,
+									"userOrder":userOrder,//随机生成20位数字,不成功时，验证码点完之后倒计时60秒，可再点
+									"money":toDecimal2(money),
+									"liqType":liqType,
+									"remark":remark,
+									"goods":"交易",
+									"goodsbody":"交易",
+									"closeTime":"1d",
+									"carId":carId,
+									"alias":alias
+							},
+							success:function(data){
+								$("#loader8").css("display","none");
+								console.log(data);
+								var bank=data.bank;
+								if(data.resultCode=="0102"){//跳转页面需要用到银行简称(ICBC)，卡类型(储蓄卡)，卡号
+									location.href="addCard.html?money="+money+"&liqType="+liqType+"&alias="+alias+"&bank="+bank+"&carId="+carId+"&userId="+userId+"&remark="+remark;
+								}else{
+									var orderNo=data.orderNo;
+									location.href="carPay.html?money="+money+"&liqType="+liqType+"&alias="+alias+"&bank="+bank+"&carId="+carId+"&orderNo="+orderNo+"&userOrder="+userOrder+"&userId="+userId+"&remark="+remark;
+								}
+							},
+				            error:function(){
+					          console.log("操作失败!");
+							}
+						})
+					}
+				})
+			$(".down").click(function(){
+				$(".down").css("display","none");
+				$(".up").css("display","block");
+				$(".con_main_more").css("display","block");
+			})
+			$(".up").click(function(){
+				$(".down").css("display","block");
+				$(".up").css("display","none");
+				$(".con_main_more").css("display","none");
+			})
+		</script>
+	</body>
+</html>
